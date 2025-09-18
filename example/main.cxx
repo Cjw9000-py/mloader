@@ -42,6 +42,7 @@ int main() {
         ...
         Screen.show(ape_texture);
     }
+}
 
 
  */

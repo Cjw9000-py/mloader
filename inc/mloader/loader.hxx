@@ -1,15 +1,15 @@
 #pragma once
 
-#include <utility>
 
 #include "common.hxx"
 #include "fs/path.hxx"
 
+
 namespace mloader {
 
 
-    struct DatabaseLoader {
-        ctor DatabaseLoader() = default;
+    struct ConfigLoader {
+        ctor ConfigLoader() = default;
 
         void add_location(const Path& path) {
             m_locations.emplace_back(path);
@@ -17,17 +17,23 @@ namespace mloader {
 
         void scan() {
             for (auto& root : m_locations) {
+                // go over every location
+
                 for (auto entry : root.walk()) {
+                    // go over the fs tree
+
                     auto path = entry.path;
 
                     for (auto& files: entry.files) {
+                        // go over files in directory
+
                         auto file = path / files;
 
                         if (!is_config(file)) {
                             continue;
                         }
 
-                        m_files.emplace_back(file);
+                        m_files.emplace_back(file); // add yml config
                     }
                 }
             }
@@ -42,6 +48,8 @@ namespace mloader {
         }
 
         static bool is_config(const Path& path) {
+            // check if it's a yml config
+
             auto sx = path.suffix();
             if (sx == ".yml") return true;
             if (sx == ".yaml") return true;

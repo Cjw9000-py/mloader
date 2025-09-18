@@ -16,6 +16,14 @@ namespace mloader {
             m_locations.emplace_back(path);
         }
 
+        vec<Path> locations() {
+            return this->m_locations;
+        }
+
+        vec<Path> entries() {
+            return this->m_files;
+        }
+
         void scan() {
             for (auto& root : m_locations) {
                 // go over every location
@@ -38,6 +46,10 @@ namespace mloader {
                     }
                 }
             }
+        }
+
+        YAML::Node load(const Path& path) {
+            return YAML::Load(path.string());
         }
 
         void dump() const {

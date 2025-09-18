@@ -1,5 +1,7 @@
 #include "mloader/loader.hxx"
 
+using namespace mloader;
+
 
 
 int main() {

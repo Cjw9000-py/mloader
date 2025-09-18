@@ -3,6 +3,7 @@
 
 #include "common.hxx"
 #include "fs/path.hxx"
+#include "yaml-cpp/yaml.h"
 
 
 namespace mloader {

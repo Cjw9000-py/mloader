@@ -1,13 +1,16 @@
 #pragma once
 
 
-#include "common.hxx"
+#include "mtl/common.hxx"
+#include "mtl/fs/path/path.hxx"
+
 #include "registry.hxx"
 #include "mloader/resource.hxx"
-#include "fs/path.hxx"
 
 
 namespace mloader {
+
+    using mtl::fs::Path;
 
     struct Database {
         /*
@@ -16,6 +19,11 @@ namespace mloader {
          * - snapshot
          * - holds and manages resources
         */
+
+        struct Entry {
+            Path path;
+
+        };
 
         ctor Database() = default;
         virt ~Database() = default;

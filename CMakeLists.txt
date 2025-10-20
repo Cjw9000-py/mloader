@@ -18,6 +18,10 @@ add_library(mloader STATIC
         inc/mloader/defs/definition.hxx
         inc/mloader/defs/registry.hxx
         src/defs/registry.cxx
+        inc/mloader/database/base.hxx
+        inc/mloader/database/file.hxx
+        inc/mloader/database/registry.hxx
+        src/database/file.cxx
 )
 target_include_directories(mloader PUBLIC inc)
 target_link_libraries(mloader PUBLIC MTL)

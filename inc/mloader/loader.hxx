@@ -2,11 +2,12 @@
 
 #include <utility>
 
-#include "common.hxx"
-#include "fs/path.hxx"
+#include "mtl/common.hxx"
+#include "mtl/fs/path/path.hxx"
 
 namespace mloader {
 
+    using mtl::fs::Path;
 
     struct DatabaseLoader {
         ctor DatabaseLoader() = default;
@@ -39,6 +40,14 @@ namespace mloader {
                 s = path.string();
                 printf("%s", s.c_str());
             }
+        }
+
+        use const vec<Path>& files() const {
+            return m_files;
+        }
+
+        void clear() {
+            m_files.clear();
         }
 
         static bool is_config(const Path& path) {

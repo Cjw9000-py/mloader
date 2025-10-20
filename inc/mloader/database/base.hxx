@@ -11,6 +11,7 @@
 namespace mloader {
 
     using mtl::fs::Path;
+    using namespace mtl::fs;
 
     struct Database {
         /*
@@ -23,6 +24,7 @@ namespace mloader {
         struct Entry {
             Path path;
 
+            use meta::Snapshot probe() const;
         };
 
         ctor Database() = default;
@@ -56,8 +58,9 @@ namespace mloader {
 
         ///// Navigation methods
 
-        virt vec<Path> list() = 0;
-        virt Resource resolve(const Path& path) = 0;
+        virt vec<Entry> list() = 0;
+        virt vec<Entry> list(const Path& rel) = 0;
+        virt Resource resolve(const Path& rel) = 0;
 
     };
 }

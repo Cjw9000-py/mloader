@@ -6,7 +6,6 @@
 #include "base.hxx"
 
 namespace mloader {
-    using namespace mtl::fs;
 
     struct FilesystemDatabase : Database {
         struct Entry {

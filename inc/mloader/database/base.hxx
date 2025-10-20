@@ -3,6 +3,7 @@
 
 #include "mtl/common.hxx"
 #include "mtl/fs/path/path.hxx"
+#include "mtl/fs/stat.hxx"
 
 #include "registry.hxx"
 #include "mloader/resource.hxx"
@@ -11,7 +12,6 @@
 namespace mloader {
 
     using mtl::fs::Path;
-    using namespace mtl::fs;
 
     struct Database {
         /*
@@ -24,7 +24,7 @@ namespace mloader {
         struct Entry {
             Path path;
 
-            use meta::Snapshot probe() const;
+            use mtl::fs::meta::Snapshot probe() const;
         };
 
         ctor Database() = default;

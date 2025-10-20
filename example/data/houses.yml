@@ -1,0 +1,26 @@
+- type: House
+  id: starter_home
+  address: 42 Maple Street
+  bedrooms: 3
+  has_garage: true
+  occupants:
+    - Alice
+    - Bob
+
+- type: House
+  id: city_loft
+  address: 900 Downtown Ave
+  bedrooms: 1
+  has_garage: false
+  occupants:
+    - Carla
+
+- type: House
+  id: lakeside_retreat
+  address: 18 Lake View Road
+  bedrooms: 4
+  has_garage: true
+  occupants:
+    - Dan
+    - Erin
+    - Finn

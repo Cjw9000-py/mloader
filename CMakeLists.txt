@@ -15,6 +15,9 @@ add_subdirectory(extern/MTL)
 
 add_library(mloader STATIC
         inc/mloader/loader.hxx
+        inc/mloader/defs/definition.hxx
+        inc/mloader/defs/registry.hxx
+        src/defs/registry.cxx
 )
 target_include_directories(mloader PUBLIC inc)
 target_link_libraries(mloader PUBLIC MTL)
@@ -31,7 +34,3 @@ add_executable(test_main
     tests/main.cxx
 )
 target_link_libraries(test_main PRIVATE mloader)
-
-
-
-

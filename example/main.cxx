@@ -1,17 +1,60 @@
+#include <iostream>
+
+#include "mloader/defs/registry.hxx"
 #include "mloader/loader.hxx"
+#include "mtl/common.hxx"
+#include "mtl/serial.hxx"
 
+using namespace mtl::serial;
 
+namespace {
+
+struct House : mloader::Definition {
+    str id;
+    str address;
+    int bedrooms = 0;
+    bool has_garage = false;
+    vec<str> occupants;
+
+    VISIT() override {
+        VIEW(id);
+        VIEW(address);
+        VIEW(bedrooms);
+        VIEW(has_garage);
+        VIEW_VEC(occupants);
+    }
+
+    use const str& identifier() cx override {
+        return id;
+    }
+};
+
+} // namespace
 
 int main() {
-    Path root = "data/";
+    using namespace mloader;
 
-    ConfigLoader loader { };
-    loader.add_location(root);
+    DatabaseLoader loader;
+    loader.add_location(mtl::fs::Path{"data"});
     loader.scan();
-    loader.dump();
 
+    DefinitionRegistry registry;
+    registry.register_type("House", [] {
+        return make_uptr<House>();
+    });
+    registry.ingest(loader.files());
 
+    auto houses = registry.definitions("House");
+    std::cout << "Loaded " << houses.size() << " house definitions\n";
 
+    if (const auto* house = dynamic_cast<const House*>(registry.find("House", "starter_home"))) {
+        std::cout << "Starter home at " << house->address << " has "
+                  << house->bedrooms << " bedrooms and "
+                  << (house->has_garage ? "a garage" : "no garage")
+                  << ".\n";
+    }
+
+    return 0;
 }
 
 /*

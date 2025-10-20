@@ -1,51 +1,32 @@
 #pragma once
 
-
 #include "mtl/common.hxx"
-#include "mtl/fs/path/path.hxx"
-#include "mtl/fs/stat.hxx"
+#include "mtl/fs/path/pure.hxx"
 
 #include "registry.hxx"
 #include "mloader/resource.hxx"
 
-
 namespace mloader {
 
-    using mtl::fs::Path;
-
+    /**
+     * Virtual archive interface abstracting resources stored within a
+     * backend-neutral container. Paths are logical, relative PurePath values
+     * that describe entries inside the archive regardless of the underlying
+     * storage (filesystem directories, packed binaries, etc.).
+     */
     struct Database {
-        /*
-         * - Holds resource entries
-         * - resolves requests against contents
-         * - snapshot
-         * - holds and manages resources
-        */
-
-        struct Entry {
-            Path path;
-
-            use mtl::fs::meta::Snapshot probe() const;
-        };
+        using PurePath = mtl::fs::PurePath;
 
         ctor Database() = default;
         virt ~Database() = default;
 
+        /// Indicates whether the database is ready for queries.
+        prop virt bool is_loaded() const noexcept = 0;
 
-        ///// Loading methods
-
-        /**
-         * Checks if the database has finished loading and is in a usable state.
-         */
-        prop virt bool is_loaded() cx = 0;
-
-        /**
-         * Initializes and loads the database into memory.
-         */
+        /// Performs any loading required to service requests.
         virt Database& load() = 0;
 
-        /**
-         * Unloads the database and releases associated resources.
-         */
+        /// Releases resources held by the implementation.
         virt Database& unload() = 0;
 
         Database& activate() {
@@ -56,11 +37,41 @@ namespace mloader {
             return DatabaseRegistry::get().deactivate(*this);
         }
 
-        ///// Navigation methods
+        /**
+         * Logical entry describing a path inside the database. Entries carry a
+         * back-reference to their owning Database so convenience queries can be
+         * issued without requiring clients to hold additional state.
+         */
+        struct Entry {
+            PurePath path;
+            Database* db = nullptr;
 
+            use bool exists() const {
+                return db && db->exists(path);
+            }
+
+            use bool is_file() const {
+                return db && db->is_file(path);
+            }
+
+            use bool is_dir() const {
+                return db && db->is_dir(path);
+            }
+        };
+
+        /// Lists entries at the root of the database.
         virt vec<Entry> list() = 0;
-        virt vec<Entry> list(const Path& rel) = 0;
-        virt Resource resolve(const Path& rel) = 0;
+        /// Lists entries under the given relative path.
+        virt vec<Entry> list(const PurePath& rel) = 0;
+        /// Resolves the given entry to a managed resource handle.
+        virt ResourceHandle resolve(const PurePath& rel) = 0;
 
+        /// Checks whether a logical path exists within the archive.
+        virt bool exists(const PurePath& rel) const = 0;
+        /// Checks whether the path refers to a file-like payload.
+        virt bool is_file(const PurePath& rel) const = 0;
+        /// Checks whether the path refers to a directory-like entry.
+        virt bool is_dir(const PurePath& rel) const = 0;
     };
-}
+
+} // namespace mloader

@@ -15,6 +15,7 @@ add_subdirectory(extern/MTL)
 
 add_library(mloader STATIC
         inc/mloader/loader.hxx
+        inc/mloader/resource.hxx
         inc/mloader/defs/definition.hxx
         inc/mloader/defs/registry.hxx
         src/defs/registry.cxx
@@ -22,6 +23,7 @@ add_library(mloader STATIC
         inc/mloader/database/file.hxx
         inc/mloader/database/registry.hxx
         src/database/file.cxx
+        src/resource.cxx
 )
 target_include_directories(mloader PUBLIC inc)
 target_link_libraries(mloader PUBLIC MTL)

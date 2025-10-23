@@ -3,8 +3,6 @@
 #include "mtl/common.hxx"
 
 #include <atomic>
-#include <utility>
-
 namespace mloader {
 
     struct Database;
@@ -15,13 +13,11 @@ namespace mloader {
      * their raw memory while retaining ownership inside the database.
      */
     struct Resource {
-        ctor Resource(Database& owner) : m_db(&owner) {}
+        explicit Resource(Database& owner);
         virt ~Resource() = default;
 
         /// @return Database that created and manages this resource instance.
-        use Database& db() const {
-            return *m_db;
-        }
+        use Database& db() const;
 
         /// @return Pointer to the immutable data backing the resource.
         virt const void* data() const = 0;
@@ -29,22 +25,14 @@ namespace mloader {
         virt u64 size() const = 0;
 
         /// Increases the external reference count.
-        void inc_ref() {
-            ++m_refcount;
-        }
+        void inc_ref();
 
         /// Decreases the external reference count and destroys at zero.
-        void dec_ref() {
-            if (--m_refcount == 0) {
-                destroy_self();
-            }
-        }
+        void dec_ref();
 
     protected:
         /// Allows derived classes to customise destruction strategies.
-        virt void destroy_self() {
-            delete this;
-        }
+        virt void destroy_self();
 
     private:
         Database* m_db;
@@ -57,63 +45,19 @@ namespace mloader {
      * producing Database through explicit reference counting.
      */
     struct ResourceHandle {
-        ctor ResourceHandle(Resource* res = nullptr)
-            : m_res(res) {
-            if (m_res) {
-                m_res->inc_ref();
-            }
-        }
+        explicit ResourceHandle(Resource* res = nullptr);
 
-        ResourceHandle(const ResourceHandle& other)
-            : m_res(other.m_res) {
-            if (m_res) {
-                m_res->inc_ref();
-            }
-        }
+        ResourceHandle(const ResourceHandle& other);
+        ResourceHandle(ResourceHandle&& other) noexcept;
+        ~ResourceHandle();
 
-        ResourceHandle(ResourceHandle&& other) noexcept
-            : m_res(std::exchange(other.m_res, nullptr)) {}
+        ResourceHandle& operator=(const ResourceHandle& other);
+        ResourceHandle& operator=(ResourceHandle&& other) noexcept;
 
-        ~ResourceHandle() {
-            if (m_res) {
-                m_res->dec_ref();
-            }
-        }
+        use Resource* operator->() const;
+        use Resource& operator*() const;
 
-        ResourceHandle& operator=(const ResourceHandle& other) {
-            if (this == &other) {
-                return *this;
-            }
-            if (m_res) {
-                m_res->dec_ref();
-            }
-            m_res = other.m_res;
-            if (m_res) {
-                m_res->inc_ref();
-            }
-            return *this;
-        }
-
-        ResourceHandle& operator=(ResourceHandle&& other) noexcept {
-            if (m_res) {
-                m_res->dec_ref();
-            }
-            m_res = std::exchange(other.m_res, nullptr);
-            return *this;
-        }
-
-        use Resource* operator->() const {
-            return m_res;
-        }
-
-        use Resource& operator*() const {
-            return *m_res;
-        }
-
-        use bool valid() const {
-            return m_res != nullptr;
-        }
-
+        use bool valid() const;
     private:
         Resource* m_res;
     };

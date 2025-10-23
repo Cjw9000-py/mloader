@@ -11,17 +11,6 @@ namespace mloader {
 
         /// Returns the logical identifier for this definition (must be unique per type).
         use virt const str& identifier() cx = 0;
-
-        void set_source(const mtl::fs::Path& path) {
-            m_source = path;
-        }
-
-        use const mtl::fs::Path& source() cx {
-            return m_source;
-        }
-
-    protected:
-        mtl::fs::Path m_source;
     };
 
 } // namespace mloader

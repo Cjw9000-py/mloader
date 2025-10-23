@@ -38,5 +38,7 @@ add_subdirectory(example)
 
 add_executable(test_main
     tests/main.cxx
+    tests/test_loader.cxx
+    tests/test_filesystem_db.cxx
 )
 target_link_libraries(test_main PRIVATE mloader)

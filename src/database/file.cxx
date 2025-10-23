@@ -1,6 +1,7 @@
 #include "mloader/database/file.hxx"
 
 #include <algorithm>
+#include <unordered_set>
 #include <utility>
 
 #include "mtl/error.hxx"
@@ -8,41 +9,47 @@
 using namespace mloader;
 
 namespace {
-    [[nodiscard]] static Path prepare_root(const Path& root) {
+
+    using mtl::fs::Path;
+    using mtl::fs::PurePath;
+
+    [[nodiscard]] Path prepare_root(const Path& root) {
         Path resolved = root;
         resolved = resolved.expanduser();
         if (!resolved.is_absolute()) {
             resolved = resolved.absolute();
         }
-        return resolved;
+        return resolved.resolve();
     }
 
-    [[nodiscard]] static Path join_under(const Path& base, const Path& relative) {
-        if (relative.empty()) {
-            return base;
-        }
-
+    [[nodiscard]] Path join_under(const Path& base, const PurePath& relative) {
         Path combined = base;
-        combined.with(relative.string());
+        const str rel_string = relative.string();
+        if (!rel_string.empty()) {
+            combined.with(rel_string);
+        }
         return combined;
     }
-}
 
-use bool FilesystemDatabase::Entry::matches(const Path& candidate) const {
-    if (candidate.empty()) {
-        return false;
-    }
+    class FilesystemResource final : public Resource {
+    public:
+        FilesystemResource(Database& owner, Path absolute, vec<byte> data)
+            : Resource(owner), m_absolute(std::move(absolute)), m_data(std::move(data)) {}
 
-    if (candidate.is_absolute()) {
-        const str& target = candidate.string();
-        const str& absolute_str = absolute.string();
-        if (absolute_str == target) {
-            return true;
+        const void* data() const override {
+            return m_data.empty() ? nullptr : m_data.data();
         }
-        return absolute_str == candidate.resolve().string();
-    }
-    return relative.string() == candidate.string();
-}
+
+        u64 size() const override {
+            return static_cast<u64>(m_data.size());
+        }
+
+    private:
+        Path m_absolute;
+        vec<byte> m_data;
+    };
+
+} // namespace
 
 FilesystemDatabase::FilesystemDatabase(const Path& root) {
     set_root(root);
@@ -59,11 +66,11 @@ void FilesystemDatabase::set_root(const Path& root) {
     }
 }
 
-prop const Path& FilesystemDatabase::root() cx {
+const FilesystemDatabase::Path& FilesystemDatabase::root() const {
     return m_root;
 }
 
-prop bool FilesystemDatabase::is_loaded() cx {
+bool FilesystemDatabase::is_loaded() const noexcept {
     return m_loaded;
 }
 
@@ -84,9 +91,8 @@ FilesystemDatabase& FilesystemDatabase::load() {
         throw RuntimeError("FilesystemDatabase root is not a directory: " + resolved_root.string());
     }
 
-    resolved_root = resolved_root.resolve();
     collect_entries(resolved_root);
-    m_resolved_root = resolved_root;
+    m_resolved_root = std::move(resolved_root);
     m_loaded = true;
     return *this;
 }
@@ -98,106 +104,184 @@ FilesystemDatabase& FilesystemDatabase::unload() {
     return *this;
 }
 
-vec<Path> FilesystemDatabase::list() {
+void FilesystemDatabase::ensure_loaded() const {
     if (!m_loaded) {
-        load();
+        const_cast<FilesystemDatabase*>(this)->load();
+    }
+}
+
+FilesystemDatabase::PurePath FilesystemDatabase::normalise(const PurePath& rel) const {
+    if (rel.is_absolute()) {
+        throw RuntimeError("Database paths must be relative: " + rel.as_posix());
     }
 
-    vec<Path> paths;
-    paths.reserve(m_entries.size());
+    str posix = rel.as_posix();
+    while (!posix.empty() && posix.front() == '/') {
+        posix.erase(posix.begin());
+    }
+    while (!posix.empty() && posix.rfind("./", 0) == 0) {
+        posix.erase(0, 2);
+    }
+    while (!posix.empty() && posix.back() == '/') {
+        posix.pop_back();
+    }
+    if (posix == ".") {
+        posix.clear();
+    }
+    if (posix.empty()) {
+        return PurePath();
+    }
+    const str canonical = PurePath(posix).as_posix();
+    return canonical.empty() ? PurePath() : PurePath(canonical);
+}
+
+vec<Database::Entry> FilesystemDatabase::list() {
+    ensure_loaded();
+    return m_entries;
+}
+
+vec<Database::Entry> FilesystemDatabase::list(const PurePath& rel) {
+    ensure_loaded();
+
+    auto relative = normalise(rel);
+    if (relative.string().empty()) {
+        return list();
+    }
+
+    const str filter = relative.as_posix();
+    str prefix = filter;
+    if (!prefix.empty()) {
+        prefix += '/';
+    }
+
+    vec<Entry> subset;
     for (const auto& entry : m_entries) {
-        paths.emplace_back(entry.relative);
+        const str entry_str = entry.path.as_posix();
+        if (entry_str == filter || (!prefix.empty() && entry_str.rfind(prefix, 0) == 0)) {
+            subset.emplace_back(entry);
+        }
     }
-    return paths;
+    return subset;
 }
 
-Resource FilesystemDatabase::resolve(const Path& path) {
-    if (!m_loaded) {
-        load();
+ResourceHandle FilesystemDatabase::resolve(const PurePath& rel) {
+    ensure_loaded();
+
+    auto relative = normalise(rel);
+    if (relative.string().empty()) {
+        throw RuntimeError("Cannot resolve the database root as a resource.");
     }
 
-    Path absolute = make_absolute(path);
-    Entry* entry = find_entry(absolute);
+    const Entry* entry = find_entry(relative);
     if (!entry) {
-        throw RuntimeError("Failed to resolve resource: " + path.string());
+        throw RuntimeError("Failed to resolve resource: " + relative.as_posix());
     }
 
-    if (auto snapshot = mtl::fs::meta::inspect_if(entry->absolute)) {
-        entry->metadata = *snapshot;
+    if (!is_file(relative)) {
+        throw RuntimeError("Requested path is not a file: " + relative.as_posix());
     }
 
-    return Resource{};
+    Path absolute = make_absolute(relative);
+    auto data = absolute.read_bytes();
+    auto* resource = new FilesystemResource(*this, std::move(absolute), std::move(data));
+    return ResourceHandle(resource);
 }
 
-use Path FilesystemDatabase::make_absolute(const Path& path) const {
-    if (path.empty()) {
-        return m_resolved_root;
+bool FilesystemDatabase::exists(const PurePath& rel) const {
+    ensure_loaded();
+    auto relative = normalise(rel);
+    if (relative.string().empty()) {
+        return true;
     }
-
-    if (path.is_absolute()) {
-        return path.resolve();
-    }
-
-    Path absolute = join_under(m_resolved_root, path);
-    absolute = absolute.resolve();
-
-    if (!absolute.is_relative_to(m_resolved_root)) {
-        throw RuntimeError("Path escapes database root: " + path.string());
-    }
-
-    return absolute;
+    return find_entry(relative) != nullptr;
 }
 
-FilesystemDatabase::Entry* FilesystemDatabase::find_entry(const Path& absolute) {
-    const str& target = absolute.string();
-    auto it = std::find_if(m_entries.begin(), m_entries.end(), [&](const Entry& entry) {
-        return entry.absolute.string() == target;
-    });
-    if (it == m_entries.end()) {
-        return nullptr;
+bool FilesystemDatabase::is_file(const PurePath& rel) const {
+    ensure_loaded();
+    auto relative = normalise(rel);
+    if (relative.string().empty()) {
+        return false;
     }
-    return &(*it);
+    Path absolute = make_absolute(relative);
+    return absolute.exists() && absolute.is_file();
 }
 
-const FilesystemDatabase::Entry* FilesystemDatabase::find_entry(const Path& absolute) const {
-    const str& target = absolute.string();
-    auto it = std::find_if(m_entries.cbegin(), m_entries.cend(), [&](const Entry& entry) {
-        return entry.absolute.string() == target;
-    });
-    if (it == m_entries.cend()) {
-        return nullptr;
+bool FilesystemDatabase::is_dir(const PurePath& rel) const {
+    ensure_loaded();
+    auto relative = normalise(rel);
+    if (relative.string().empty()) {
+        return true;
     }
-    return &(*it);
+    Path absolute = make_absolute(relative);
+    return absolute.exists() && absolute.is_dir();
+}
+
+FilesystemDatabase::Path FilesystemDatabase::make_absolute(const PurePath& rel) const {
+    if (!m_loaded) {
+        throw RuntimeError("FilesystemDatabase has not been loaded.");
+    }
+    Path absolute = join_under(m_resolved_root, rel);
+    return absolute.resolve();
+}
+
+FilesystemDatabase::Entry* FilesystemDatabase::find_entry(const PurePath& rel) {
+    auto relative = normalise(rel);
+    const str target = relative.as_posix();
+    for (auto& entry : m_entries) {
+        if (entry.path.as_posix() == target) {
+            return &entry;
+        }
+    }
+    return nullptr;
+}
+
+const FilesystemDatabase::Entry* FilesystemDatabase::find_entry(const PurePath& rel) const {
+    auto relative = normalise(rel);
+    const str target = relative.as_posix();
+    for (const auto& entry : m_entries) {
+        if (entry.path.as_posix() == target) {
+            return &entry;
+        }
+    }
+    return nullptr;
 }
 
 void FilesystemDatabase::collect_entries(const Path& resolved_root) {
     m_entries.clear();
 
-    for (const auto& walk_entry : resolved_root.walk()) {
-        for (const auto& filename : walk_entry.files) {
-            Path absolute = (walk_entry.path / filename).resolve();
-
+    std::unordered_set<str> seen;
+    auto add_entry = [&](const Path& absolute) {
+        auto relative_path = absolute.relative_to(resolved_root);
+        str rel_string = relative_path.string();
+        if (rel_string.empty()) {
+            return;
+        }
+        PurePath rel(rel_string);
+        str key = rel.as_posix();
+        if (seen.insert(key).second) {
             Entry entry;
-            entry.absolute = absolute;
-
-            if (absolute.is_relative_to(resolved_root)) {
-                auto relative_path = absolute.relative_to(resolved_root);
-                entry.relative = Path(relative_path.string());
-            } else {
-                entry.relative = Path(filename);
-            }
-
-            if (auto snapshot = mtl::fs::meta::inspect_if(absolute)) {
-                entry.metadata = *snapshot;
-            } else {
-                entry.metadata = {};
-            }
-
+            entry.path = rel;
+            entry.db = this;
             m_entries.emplace_back(std::move(entry));
+        }
+    };
+
+    for (const auto& walk_entry : resolved_root.walk()) {
+        Path current = walk_entry.path;
+        str current_rel = current.relative_to(resolved_root).string();
+        if (!current_rel.empty()) {
+            add_entry(current);
+        }
+
+        for (const auto& dir_name : walk_entry.dirs) {
+            add_entry((walk_entry.path / dir_name).resolve());
+        }
+        for (const auto& file_name : walk_entry.files) {
+            add_entry((walk_entry.path / file_name).resolve());
         }
     }
 
     std::sort(m_entries.begin(), m_entries.end(), [](const Entry& lhs, const Entry& rhs) {
-        return lhs.relative.string() < rhs.relative.string();
+        return lhs.path.as_posix() < rhs.path.as_posix();
     });
 }

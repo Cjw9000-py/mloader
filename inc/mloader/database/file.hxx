@@ -1,40 +1,44 @@
 #pragma once
 
 #include "mtl/common.hxx"
-#include "mtl/fs/stat.hxx"
+#include "mtl/fs/path/path.hxx"
+#include "mtl/fs/path/pure.hxx"
 
 #include "base.hxx"
 
 namespace mloader {
 
     struct FilesystemDatabase : Database {
-        struct Entry {
-            Path absolute;
-            Path relative;
-            meta::Snapshot metadata{};
-
-            use bool matches(const Path& candidate) const;
-        };
+        using Database::Entry;
+        using PurePath = Database::PurePath;
+        using Path = mtl::fs::Path;
 
         ctor FilesystemDatabase() = default;
         ctor FilesystemDatabase(const Path& root);
-
         ~FilesystemDatabase() override = default;
 
-        prop bool is_loaded() cx override;
+        prop bool is_loaded() const noexcept override;
         FilesystemDatabase& load() override;
         FilesystemDatabase& unload() override;
 
-        vec<Path> list() override;
-        Resource resolve(const Path& path) override;
+        vec<Entry> list() override;
+        vec<Entry> list(const PurePath& rel) override;
+        ResourceHandle resolve(const PurePath& rel) override;
+
+        bool exists(const PurePath& rel) const override;
+        bool is_file(const PurePath& rel) const override;
+        bool is_dir(const PurePath& rel) const override;
 
         void set_root(const Path& root);
-        prop const Path& root() cx;
+        prop const Path& root() const;
 
     protected:
-        use Path make_absolute(const Path& path) const;
-        Entry* find_entry(const Path& absolute);
-        const Entry* find_entry(const Path& absolute) const;
+        void ensure_loaded() const;
+        PurePath normalise(const PurePath& rel) const;
+        Path make_absolute(const PurePath& rel) const;
+
+        Entry* find_entry(const PurePath& rel);
+        const Entry* find_entry(const PurePath& rel) const;
         void collect_entries(const Path& resolved_root);
 
         Path m_root;
@@ -42,4 +46,5 @@ namespace mloader {
         vec<Entry> m_entries;
         bool m_loaded = false;
     };
-}
+
+} // namespace mloader

@@ -25,16 +25,16 @@ namespace mloader {
         vec<Entry> list(const PurePath& rel) override;
         ResourceHandle resolve(const PurePath& rel) override;
 
-        bool exists(const PurePath& rel) const override;
-        bool is_file(const PurePath& rel) const override;
-        bool is_dir(const PurePath& rel) const override;
+        use bool exists(const PurePath& rel) const override;
+        use bool is_file(const PurePath& rel) const override;
+        use bool is_dir(const PurePath& rel) const override;
 
         void set_root(const Path& root);
         prop const Path& root() const;
 
     protected:
         void ensure_loaded() const;
-        PurePath normalise(const PurePath& rel) const;
+        use PurePath normalise(const PurePath& rel) const;
         Path make_absolute(const PurePath& rel) const;
 
         Entry* find_entry(const PurePath& rel);

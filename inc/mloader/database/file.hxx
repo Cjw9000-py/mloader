@@ -14,7 +14,7 @@ namespace mloader {
         using Path = mtl::fs::Path;
 
         ctor FilesystemDatabase() = default;
-        ctor FilesystemDatabase(const Path& root);
+        ctor FilesystemDatabase(const Path& root) { set_root(root); }
         ~FilesystemDatabase() override = default;
 
         prop bool is_loaded() const noexcept override;

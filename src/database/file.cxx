@@ -51,10 +51,6 @@ namespace {
 
 } // namespace
 
-FilesystemDatabase::FilesystemDatabase(const Path& root) {
-    set_root(root);
-}
-
 void FilesystemDatabase::set_root(const Path& root) {
     if (m_root == root) {
         return;

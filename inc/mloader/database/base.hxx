@@ -1,7 +1,7 @@
 #pragma once
 
 #include "mtl/common.hxx"
-#include "mtl/fs/path/pure.hxx"
+#include "mtl/fs/path.hxx"
 
 #include "registry.hxx"
 #include "mloader/resource.hxx"

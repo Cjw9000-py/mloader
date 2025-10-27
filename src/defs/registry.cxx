@@ -129,8 +129,6 @@ namespace mloader {
             throw RuntimeError("Factory for definition type '" + type_name + "' returned null (source: " + source.string() + ").");
         }
 
-        definition->set_source(source);
-
         try {
             definition->load_yaml(node);
         } catch (const YAML::Exception& ex) {

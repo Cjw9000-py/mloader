@@ -3,7 +3,6 @@
 #include "mtl/common.hxx"
 
 #include "mloader/database/base.hxx"
-#include "mloader/resource.hxx"
 
 #include <algorithm>
 #include <cstdio>
@@ -11,12 +10,6 @@
 namespace mloader {
 
     struct DatabaseScanner {
-        struct Config {
-            Database* db = nullptr;
-            Database::PurePath path;
-            ResourceHandle resource;
-        };
-
         ctor DatabaseScanner(Database& database)
             : m_database(&database) {}
 
@@ -55,26 +48,22 @@ namespace mloader {
                     continue;
                 }
 
-                Config config;
-                config.db = entry_db;
-                config.path = entry.path;
-                config.resource = entry_db->resolve(entry.path);
-                m_configs.emplace_back(std::move(config));
+                m_configs.emplace_back(entry.path);
             }
 
-            std::sort(m_configs.begin(), m_configs.end(), [](const Config& lhs, const Config& rhs) {
-                return lhs.path.as_posix() < rhs.path.as_posix();
+            std::sort(m_configs.begin(), m_configs.end(), [](const Database::PurePath& lhs, const Database::PurePath& rhs) {
+                return lhs.as_posix() < rhs.as_posix();
             });
         }
 
         void dump() const {
             for (const auto& cfg : m_configs) {
-                const str posix = cfg.path.as_posix();
+                const str posix = cfg.as_posix();
                 std::printf("%s\n", posix.c_str());
             }
         }
 
-        prop const vec<Config>& configs() const {
+        prop const vec<Database::PurePath>& configs() const {
             return m_configs;
         }
 
@@ -89,7 +78,7 @@ namespace mloader {
 
     private:
         Database* m_database = nullptr;
-        vec<Config> m_configs;
+        vec<Database::PurePath> m_configs;
     };
 
 } // namespace mloader

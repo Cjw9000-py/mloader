@@ -41,10 +41,13 @@ int main() {
 
     vec<mtl::fs::Path> config_files;
     config_files.reserve(scanner.configs().size());
-    for (const auto& cfg : scanner.configs()) {
-        mtl::fs::Path file_path = database.root();
-        file_path.with(cfg.path.as_posix());
-        config_files.emplace_back(std::move(file_path));
+    for (const auto& relative : scanner.configs()) {
+        mtl::fs::Path absolute = database.root();
+        const str rel = relative.as_posix();
+        if (!rel.empty()) {
+            absolute.with(rel);
+        }
+        config_files.emplace_back(std::move(absolute));
     }
 
     DefinitionRegistry registry;

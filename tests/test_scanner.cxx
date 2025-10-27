@@ -59,13 +59,8 @@ MTL_TEST(scanner, collects_config_files) {
     vec<str> collected;
     collected.reserve(configs.size());
     for (const auto& cfg : configs) {
-        fassert(cfg.db == &db, "config entry should report originating database");
-        fassert(cfg.resource.valid(), "config resource handle must be valid");
-        collected.emplace_back(cfg.path.as_posix());
-
-        str payload(static_cast<const char*>(cfg.resource->data()),
-                    static_cast<usize>(cfg.resource->size()));
-        fassert(!payload.empty(), "config payload should not be empty");
+        fassert(db.is_file(cfg), "config path should resolve to a file");
+        collected.emplace_back(cfg.as_posix());
     }
     std::sort(collected.begin(), collected.end());
 

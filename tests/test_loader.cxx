@@ -5,6 +5,7 @@
 #include "mtl/fs/tmp.hxx"
 
 #include <algorithm>
+#include <filesystem>
 #include <fstream>
 
 using mloader::DatabaseLoader;
@@ -14,16 +15,15 @@ using mtl::fs::tmp::directory;
 namespace {
 
     void ensure_parent_exists(const Path& file_path) {
-        auto parent_pure = file_path.parent();
-        if (parent_pure.empty()) {
+        std::filesystem::path parent = std::filesystem::path(file_path.string()).parent_path();
+        if (parent.empty()) {
             return;
         }
 
-    Path parent(parent_pure);
-    if (!parent.exists()) {
-        parent.mkdir(true, true);
+        std::error_code ec;
+        std::filesystem::create_directories(parent, ec);
+        fassert(!ec, "failed to create directories:", parent.string(), ec.message());
     }
-}
 
 Path write_text_file(const Path& target, const str& contents) {
     ensure_parent_exists(target);

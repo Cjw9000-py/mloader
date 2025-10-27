@@ -23,7 +23,7 @@ namespace mloader {
             return *m_database;
         }
 
-        void scan() {
+        DatabaseScanner& scan() {
             clear();
 
             Database& db = database();
@@ -54,21 +54,24 @@ namespace mloader {
             std::sort(m_configs.begin(), m_configs.end(), [](const Database::PurePath& lhs, const Database::PurePath& rhs) {
                 return lhs.as_posix() < rhs.as_posix();
             });
+
+            return *this;
         }
 
         void dump() const {
+            printf("Scanned files:\n");
             for (const auto& cfg : m_configs) {
                 const str posix = cfg.as_posix();
-                std::printf("%s\n", posix.c_str());
+                printf("\t%s\n", posix.c_str());
             }
-        }
-
-        prop const vec<Database::PurePath>& configs() const {
-            return m_configs;
         }
 
         void clear() {
             m_configs.clear();
+        }
+
+        prop const vec<Database::PurePath>& configs() const {
+            return m_configs;
         }
 
         static bool is_config(const Database::PurePath& path) {

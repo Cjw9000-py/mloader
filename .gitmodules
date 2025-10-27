@@ -1,3 +1,12 @@
 [submodule "extern/MTL"]
 	path = extern/MTL
 	url = git@github.com:Cjw9000-py/MTL.git
+[submodule "extern/libjpeg-turbo"]
+	path = extern/libjpeg-turbo
+	url = git@github.com:libjpeg-turbo/libjpeg-turbo.git
+[submodule "extern/stb"]
+	path = extern/stb
+	url = git@github.com:nothings/stb.git
+[submodule "extern/libspng"]
+	path = extern/libspng
+	url = git@github.com:randy408/libspng.git

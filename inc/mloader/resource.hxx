@@ -3,7 +3,14 @@
 #include "mtl/common.hxx"
 
 #include <atomic>
+#include <any>
+#include <mutex>
+#include <unordered_map>
+
 namespace mloader {
+
+    enum class AssetType : u8;
+    struct Asset;
 
     struct Database;
 
@@ -37,6 +44,10 @@ namespace mloader {
     private:
         Database* m_db;
         std::atomic<u32> m_refcount{0};
+
+        friend struct Asset;
+        mutable std::mutex m_asset_mutex;
+        mutable std::unordered_map<int, std::any> m_asset_cache;
     };
 
     /**

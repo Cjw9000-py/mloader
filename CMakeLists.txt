@@ -14,6 +14,7 @@ add_subdirectory(extern/MTL)
 ### mloader Library
 
 add_library(mloader STATIC
+        inc/mloader/asset.hxx
         inc/mloader/loader.hxx
         inc/mloader/resource.hxx
         inc/mloader/defs/definition.hxx
@@ -22,7 +23,9 @@ add_library(mloader STATIC
         inc/mloader/database/base.hxx
         inc/mloader/database/file.hxx
         inc/mloader/database/registry.hxx
+        src/asset.cxx
         src/database/file.cxx
+        src/database/registry.cxx
         src/resource.cxx
 )
 target_include_directories(mloader PUBLIC inc)
@@ -38,6 +41,7 @@ add_subdirectory(example)
 
 add_executable(test_main
     tests/main.cxx
+    tests/test_asset.cxx
     tests/test_loader.cxx
     tests/test_filesystem_db.cxx
     tests/test_resource.cxx

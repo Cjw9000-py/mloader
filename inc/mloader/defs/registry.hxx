@@ -4,6 +4,7 @@
 #include "mtl/fs/path/path.hxx"
 
 #include "mloader/defs/definition.hxx"
+#include "mloader/resource.hxx"
 
 namespace YAML {
     class Node;
@@ -19,6 +20,8 @@ namespace mloader {
 
         void ingest(const mtl::fs::Path& file_path);
         void ingest(const vec<mtl::fs::Path>& files);
+        void ingest(const ResourceHandle& resource);
+        void ingest(const vec<ResourceHandle>& resources);
 
         use vec<str> types() const;
         use vec<const Definition*> definitions(const str& type_name) const;
@@ -27,7 +30,9 @@ namespace mloader {
         void clear();
 
     protected:
-        void ingest_node(const str& type_name, const YAML::Node& node, const mtl::fs::Path& source);
+        void ingest_yaml(const str& contents, const str& source_label);
+        void ingest_resource(const ResourceHandle& resource, const str& source_label);
+        void ingest_node(const str& type_name, const YAML::Node& node, const str& source_label);
 
         umap<str, Factory> m_factories;
         umap<str, umap<str, DefinitionPtr>> m_definitions;

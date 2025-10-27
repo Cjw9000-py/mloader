@@ -24,6 +24,27 @@ namespace mloader {
         }
 
         auto contents = file_path.read_text();
+        ingest_yaml(contents, file_path.string());
+    }
+
+    void DefinitionRegistry::ingest(const vec<mtl::fs::Path>& files) {
+        for (const auto& file : files) {
+            ingest(file);
+        }
+    }
+
+    void DefinitionRegistry::ingest(const ResourceHandle& resource) {
+        ingest_resource(resource, "<resource>");
+    }
+
+    void DefinitionRegistry::ingest(const vec<ResourceHandle>& resources) {
+        for (usize i = 0; i < resources.size(); ++i) {
+            str label = "<resource[" + std::to_string(i) + "]>";
+            ingest_resource(resources[i], label);
+        }
+    }
+
+    void DefinitionRegistry::ingest_yaml(const str& contents, const str& source_label) {
         if (contents.empty()) {
             return;
         }
@@ -32,7 +53,7 @@ namespace mloader {
         try {
             root = YAML::Load(contents);
         } catch (const YAML::Exception& ex) {
-            throw RuntimeError("Failed to parse YAML from '" + file_path.string() + "': " + ex.what());
+            throw RuntimeError("Failed to parse YAML from '" + source_label + "': " + ex.what());
         }
 
         if (!root || root.IsNull()) {
@@ -41,22 +62,22 @@ namespace mloader {
 
         auto process_node = [&](const YAML::Node& node) {
             if (!node.IsMap()) {
-                throw RuntimeError("Each definition entry in '" + file_path.string() + "' must be a mapping.");
+                throw RuntimeError("Each definition entry in '" + source_label + "' must be a mapping.");
             }
 
             auto type_node = node["type"];
             if (!type_node || !type_node.IsScalar()) {
-                throw RuntimeError("Definition entry in '" + file_path.string() + "' is missing scalar 'type' field.");
+                throw RuntimeError("Definition entry in '" + source_label + "' is missing scalar 'type' field.");
             }
 
             str type_name;
             try {
                 type_name = type_node.as<str>();
             } catch (const YAML::Exception& ex) {
-                throw RuntimeError("Failed to convert definition type to string in '" + file_path.string() + "': " + ex.what());
+                throw RuntimeError("Failed to convert definition type to string in '" + source_label + "': " + ex.what());
             }
 
-            ingest_node(type_name, node, file_path);
+            ingest_node(type_name, node, source_label);
         };
 
         if (root.IsSequence()) {
@@ -66,14 +87,27 @@ namespace mloader {
         } else if (root.IsMap()) {
             process_node(root);
         } else {
-            throw RuntimeError("Root of '" + file_path.string() + "' must be a mapping or sequence of mappings.");
+            throw RuntimeError("Root of '" + source_label + "' must be a mapping or sequence of mappings.");
         }
     }
 
-    void DefinitionRegistry::ingest(const vec<mtl::fs::Path>& files) {
-        for (const auto& file : files) {
-            ingest(file);
+    void DefinitionRegistry::ingest_resource(const ResourceHandle& resource, const str& source_label) {
+        if (!resource.valid()) {
+            throw RuntimeError("Attempted to ingest invalid resource handle: " + source_label);
         }
+
+        const auto size = resource->size();
+        if (size == 0) {
+            return;
+        }
+
+        const auto* raw = static_cast<const char*>(resource->data());
+        if (!raw) {
+            throw RuntimeError("Resource '" + source_label + "' returned null data pointer.");
+        }
+
+        str contents(raw, raw + size);
+        ingest_yaml(contents, source_label);
     }
 
     vec<str> DefinitionRegistry::types() const {
@@ -118,31 +152,31 @@ namespace mloader {
         m_definitions.clear();
     }
 
-    void DefinitionRegistry::ingest_node(const str& type_name, const YAML::Node& node, const mtl::fs::Path& source) {
+    void DefinitionRegistry::ingest_node(const str& type_name, const YAML::Node& node, const str& source_label) {
         auto factory_it = m_factories.find(type_name);
         if (factory_it == m_factories.end()) {
-            throw RuntimeError("No factory registered for definition type '" + type_name + "' (found in " + source.string() + ").");
+            throw RuntimeError("No factory registered for definition type '" + type_name + "' (found in " + source_label + ").");
         }
 
         auto definition = factory_it->second();
         if (!definition) {
-            throw RuntimeError("Factory for definition type '" + type_name + "' returned null (source: " + source.string() + ").");
+            throw RuntimeError("Factory for definition type '" + type_name + "' returned null (source: " + source_label + ").");
         }
 
         try {
             definition->load_yaml(node);
         } catch (const YAML::Exception& ex) {
-            throw RuntimeError("Failed to load definition of type '" + type_name + "' from " + source.string() + ": " + ex.what());
+            throw RuntimeError("Failed to load definition of type '" + type_name + "' from " + source_label + ": " + ex.what());
         }
 
         const str& id = definition->identifier();
         if (id.empty()) {
-            throw RuntimeError("Definition of type '" + type_name + "' in " + source.string() + " produced an empty identifier.");
+            throw RuntimeError("Definition of type '" + type_name + "' in " + source_label + " produced an empty identifier.");
         }
 
         auto& bucket = m_definitions[type_name];
         if (bucket.contains(id)) {
-            throw RuntimeError("Duplicate definition '" + id + "' for type '" + type_name + "' encountered in " + source.string() + ".");
+            throw RuntimeError("Duplicate definition '" + id + "' for type '" + type_name + "' encountered in " + source_label + ".");
         }
 
         bucket.emplace(id, std::move(definition));

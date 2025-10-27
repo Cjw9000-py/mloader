@@ -41,22 +41,12 @@ int main() {
 
     vec<ResourceHandle> handles = database.resolve(scanner.configs());
 
-    vec<mtl::fs::Path> config_files; // dont like this, well do it cleaner. look above
-    config_files.reserve(scanner.configs().size());
-    for (const auto& relative : scanner.configs()) {
-        mtl::fs::Path absolute = database.root();
-        const str rel = relative.as_posix();
-        if (!rel.empty()) {
-            absolute.with(rel);
-        }
-        config_files.emplace_back(std::move(absolute));
-    }
-
     DefinitionRegistry registry;
     registry.register_type("House", [] {
         return make_uptr<House>();
     });
-    registry.ingest(config_files);
+
+    registry.ingest(handles);
 
     auto houses = registry.definitions("House");
     std::cout << "Loaded " << houses.size() << " house definitions\n";

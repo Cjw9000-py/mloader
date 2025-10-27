@@ -15,7 +15,7 @@ add_subdirectory(extern/MTL)
 
 add_library(mloader STATIC
         inc/mloader/asset.hxx
-        inc/mloader/loader.hxx
+        inc/mloader/scanner.hxx
         inc/mloader/resource.hxx
         inc/mloader/defs/definition.hxx
         inc/mloader/defs/registry.hxx
@@ -42,7 +42,7 @@ add_subdirectory(example)
 add_executable(test_main
     tests/main.cxx
     tests/test_asset.cxx
-    tests/test_loader.cxx
+    tests/test_scanner.cxx
     tests/test_filesystem_db.cxx
     tests/test_resource.cxx
 )

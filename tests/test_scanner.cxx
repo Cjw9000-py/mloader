@@ -1,6 +1,6 @@
 #include "mtl/testing.hxx"
 
-#include "mloader/loader.hxx"
+#include "mloader/scanner.hxx"
 #include "mloader/database/file.hxx"
 
 #include "mtl/fs/tmp.hxx"
@@ -9,7 +9,7 @@
 #include <filesystem>
 #include <fstream>
 
-using mloader::DatabaseLoader;
+using mloader::DatabaseScanner;
 using mtl::fs::Path;
 using mtl::fs::tmp::directory;
 
@@ -40,7 +40,7 @@ Path write_text_file(const Path& target, const str& contents) {
 
 } // namespace
 
-MTL_TEST(loader, collects_config_files) {
+MTL_TEST(scanner, collects_config_files) {
     directory temp_dir;
     Path root = temp_dir.path();
 
@@ -50,11 +50,10 @@ MTL_TEST(loader, collects_config_files) {
 
     mloader::FilesystemDatabase db(root);
 
-    DatabaseLoader loader;
-    loader.add_database(db);
-    loader.scan();
+    DatabaseScanner scanner(db);
+    scanner.scan();
 
-    const auto& configs = loader.configs();
+    const auto& configs = scanner.configs();
     fassert(configs.size() == 2, "expected two config files", configs.size());
 
     vec<str> collected;

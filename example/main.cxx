@@ -1,7 +1,8 @@
 #include <iostream>
 
 #include "mloader/defs/registry.hxx"
-#include "mloader/loader.hxx"
+#include "mloader/scanner.hxx"
+#include "mloader/database/file.hxx"
 #include "mtl/common.hxx"
 #include "mtl/serial.hxx"
 
@@ -34,15 +35,23 @@ struct House : mloader::Definition {
 int main() {
     using namespace mloader;
 
-    DatabaseLoader loader;
-    loader.add_location(mtl::fs::Path{"data"});
-    loader.scan();
+    FilesystemDatabase database{mtl::fs::Path{"data"}};
+    DatabaseScanner scanner(database);
+    scanner.scan();
+
+    vec<mtl::fs::Path> config_files;
+    config_files.reserve(scanner.configs().size());
+    for (const auto& cfg : scanner.configs()) {
+        mtl::fs::Path file_path = database.root();
+        file_path.with(cfg.path.as_posix());
+        config_files.emplace_back(std::move(file_path));
+    }
 
     DefinitionRegistry registry;
     registry.register_type("House", [] {
         return make_uptr<House>();
     });
-    registry.ingest(loader.files());
+    registry.ingest(config_files);
 
     auto houses = registry.definitions("House");
     std::cout << "Loaded " << houses.size() << " house definitions\n";

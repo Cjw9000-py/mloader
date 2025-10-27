@@ -1,6 +1,7 @@
 #include "mtl/testing.hxx"
 
 #include "mloader/loader.hxx"
+#include "mloader/database/file.hxx"
 
 #include "mtl/fs/tmp.hxx"
 
@@ -40,8 +41,6 @@ Path write_text_file(const Path& target, const str& contents) {
 } // namespace
 
 MTL_TEST(loader, collects_config_files) {
-    // The loader code is WIP and not functional
-    /*
     directory temp_dir;
     Path root = temp_dir.path();
 
@@ -49,20 +48,28 @@ MTL_TEST(loader, collects_config_files) {
     write_text_file(root / "level1" / "nested" / "scene.yml", "scene: demo");
     write_text_file(root / "level1" / "notes.txt", "ignore me");
 
+    mloader::FilesystemDatabase db(root);
+
     DatabaseLoader loader;
-    loader.add_location(root);
+    loader.add_database(db);
     loader.scan();
 
-    const auto& files = loader.files();
-    fassert(files.size() == 2, "expected two config files", files.size());
+    const auto& configs = loader.configs();
+    fassert(configs.size() == 2, "expected two config files", configs.size());
 
     vec<str> collected;
-    collected.reserve(files.size());
-    for (const auto& path : files) {
-        collected.emplace_back(path.relative_to(root).as_posix());
+    collected.reserve(configs.size());
+    for (const auto& cfg : configs) {
+        fassert(cfg.db == &db, "config entry should report originating database");
+        fassert(cfg.resource.valid(), "config resource handle must be valid");
+        collected.emplace_back(cfg.path.as_posix());
+
+        str payload(static_cast<const char*>(cfg.resource->data()),
+                    static_cast<usize>(cfg.resource->size()));
+        fassert(!payload.empty(), "config payload should not be empty");
     }
     std::sort(collected.begin(), collected.end());
 
     fassert(collected[0] == "level1/config.yaml", "missing first config:", collected[0]);
-    fassert(collected[1] == "level1/nested/scene.yml", "missing second config:", collected[1]); */
+    fassert(collected[1] == "level1/nested/scene.yml", "missing second config:", collected[1]);
 }

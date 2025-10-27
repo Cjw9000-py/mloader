@@ -27,7 +27,10 @@ namespace {
 
 Path write_text_file(const Path& target, const str& contents) {
     ensure_parent_exists(target);
-    std::ofstream stream(target.string(), std::ios::binary | std::ios::trunc);
+    std::ofstream stream(
+        target.string(),
+        std::ios::binary | std::ios::trunc | std::ios::out
+    );
     fassert(stream.is_open(), "failed to open file for writing:", target.string());
     stream << contents;
     stream.close();

@@ -7,6 +7,7 @@
 #include "mtl/fs/tmp.hxx"
 
 #include <algorithm>
+#include <fstream>
 
 using mloader::FilesystemDatabase;
 using mloader::ResourceHandle;
@@ -21,17 +22,20 @@ namespace {
             return;
         }
 
-        Path parent(parent_pure);
-        if (!parent.exists()) {
-            parent.mkdir(true, true);
-        }
+    Path parent(parent_pure);
+    if (!parent.exists()) {
+        parent.mkdir(true, true);
     }
+}
 
-    Path write_text_file(const Path& target, const str& contents) {
-        ensure_parent_exists(target);
-        target.write_text(contents);
-        return target;
-    }
+Path write_text_file(const Path& target, const str& contents) {
+    ensure_parent_exists(target);
+    std::ofstream stream(target.string(), std::ios::binary | std::ios::trunc);
+    fassert(stream.is_open(), "failed to open file for writing:", target.string());
+    stream << contents;
+    stream.close();
+    return target;
+}
 
 } // namespace
 
@@ -59,13 +63,14 @@ MTL_TEST(filesystem_db, discovers_entries) {
     }
     std::sort(names.begin(), names.end());
 
-    fassert(names == vec<str>{
+    vec<str> expected{
         "assets",
         "assets/levels",
         "assets/levels/boss.txt",
         "assets/levels/intro.txt",
         "assets/textures"
-    }, "unexpected entries");
+    };
+    fassert(names == expected, "unexpected entries");
 
     fassert(db.is_dir(FilesystemDatabase::PurePath("assets/textures")), "textures directory should be detected");
 }
@@ -110,4 +115,3 @@ MTL_TEST(filesystem_db, reports_missing_entries) {
     }
     fassert(threw, "resolving missing path should throw");
 }
-

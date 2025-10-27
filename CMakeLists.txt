@@ -26,6 +26,7 @@ add_library(mloader STATIC
         src/asset.cxx
         src/database/file.cxx
         src/database/registry.cxx
+        src/scanner.cxx
         src/resource.cxx
 )
 target_include_directories(mloader PUBLIC inc)

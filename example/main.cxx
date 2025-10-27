@@ -37,7 +37,7 @@ int main() {
 
     FilesystemDatabase database{mtl::fs::Path{"data"}};
     DatabaseScanner scanner(database);
-    scanner.scan();
+    scanner.scan().dump();
 
     vec<mtl::fs::Path> config_files;
     config_files.reserve(scanner.configs().size());

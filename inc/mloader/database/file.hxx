@@ -24,6 +24,7 @@ namespace mloader {
         vec<Entry> list() override;
         vec<Entry> list(const PurePath& rel) override;
         ResourceHandle resolve(const PurePath& rel) override;
+        using Database::resolve;
 
         use bool exists(const PurePath& rel) const override;
         use bool is_file(const PurePath& rel) const override;

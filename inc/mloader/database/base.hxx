@@ -65,6 +65,14 @@ namespace mloader {
         virt vec<Entry> list(const PurePath& rel) = 0;
         /// Resolves the given entry to a managed resource handle.
         virt ResourceHandle resolve(const PurePath& rel) = 0;
+        vec<ResourceHandle> resolve(const vec<PurePath>& rels) {
+            vec<ResourceHandle> handles;
+            handles.reserve(rels.size());
+            for (const auto& rel : rels) {
+                handles.emplace_back(resolve(rel));
+            }
+            return handles;
+        }
 
         /// Checks whether a logical path exists within the archive.
         virt bool exists(const PurePath& rel) const = 0;

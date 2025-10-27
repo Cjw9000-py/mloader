@@ -2,6 +2,7 @@
 
 #include "mloader/scanner.hxx"
 #include "mloader/database/file.hxx"
+#include "mloader/resource.hxx"
 
 #include "mtl/fs/tmp.hxx"
 
@@ -66,4 +67,11 @@ MTL_TEST(scanner, collects_config_files) {
 
     fassert(collected[0] == "level1/config.yaml", "missing first config:", collected[0]);
     fassert(collected[1] == "level1/nested/scene.yml", "missing second config:", collected[1]);
+
+    auto handles = db.resolve(configs);
+    fassert(handles.size() == configs.size(), "resolve should return handles for each config", handles.size());
+    for (const auto& handle : handles) {
+        fassert(handle.valid(), "resolved handle should be valid");
+        fassert(handle->size() > 0, "resolved payload should not be empty");
+    }
 }

@@ -39,7 +39,9 @@ int main() {
     DatabaseScanner scanner(database);
     scanner.scan().dump();
 
-    vec<mtl::fs::Path> config_files;
+    vec<ResourceHandle> handles = database.resolve(scanner.configs());
+
+    vec<mtl::fs::Path> config_files; // dont like this, well do it cleaner. look above
     config_files.reserve(scanner.configs().size());
     for (const auto& relative : scanner.configs()) {
         mtl::fs::Path absolute = database.root();

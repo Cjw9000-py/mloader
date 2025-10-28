@@ -11,7 +11,7 @@ using namespace mloader;
 namespace {
 
     using mtl::fs::Path;
-    using mtl::fs::PurePath;
+    using PurePath = FilesystemDatabase::PurePath;
 
     [[nodiscard]] Path prepare_root(const Path& root) {
         Path resolved = root;
@@ -248,7 +248,7 @@ void FilesystemDatabase::collect_entries(const Path& resolved_root) {
     std::unordered_set<str> seen;
     auto add_entry = [&](const Path& absolute) {
         auto relative_path = absolute.relative_to(resolved_root);
-        str rel_string = relative_path.string();
+        str rel_string = relative_path.as_posix();
         if (rel_string.empty()) {
             return;
         }
@@ -264,7 +264,7 @@ void FilesystemDatabase::collect_entries(const Path& resolved_root) {
 
     for (const auto& walk_entry : resolved_root.walk()) {
         Path current = walk_entry.path;
-        str current_rel = current.relative_to(resolved_root).string();
+        str current_rel = current.relative_to(resolved_root).as_posix();
         if (!current_rel.empty()) {
             add_entry(current);
         }

@@ -35,7 +35,7 @@ namespace mloader {
     public:
         Asset();
         explicit Asset(AssetType type);
-        Asset(Database& database, const mtl::fs::PurePath& path, AssetType type);
+        Asset(Database& database, const Database::PurePath& path, AssetType type);
         Asset(const str& path, AssetType type);
         Asset(const char* path, AssetType type);
         virtual ~Asset() = default;
@@ -47,11 +47,11 @@ namespace mloader {
 
         prop AssetState state() const noexcept { return m_state; }
 
-        prop const mtl::fs::PurePath& path() const noexcept { return m_path; }
+        prop const Database::PurePath& path() const noexcept { return m_path; }
 
         void bind(Database& database);
-        void bind(Database& database, const mtl::fs::PurePath& path);
-        void set_path(const mtl::fs::PurePath& path);
+        void bind(Database& database, const Database::PurePath& path);
+        void set_path(const Database::PurePath& path);
 
         void unload() const;
         void touch() const;
@@ -75,7 +75,7 @@ namespace mloader {
         const std::any& cache(Resource& resource, std::any value) const;
 
         mutable Database* m_database = nullptr;
-        mtl::fs::PurePath m_path;
+        Database::PurePath m_path;
         mutable ResourceHandle m_handle;
         AssetType m_type = AssetType::invalid;
         mutable AssetState m_state = AssetState::unloaded;
@@ -88,7 +88,7 @@ namespace mloader {
         BinaryAsset();
         explicit BinaryAsset(const char* path);
         explicit BinaryAsset(const str& path);
-        BinaryAsset(Database& database, const mtl::fs::PurePath& path);
+        BinaryAsset(Database& database, const Database::PurePath& path);
 
         const Data& data() const;
 
@@ -106,7 +106,7 @@ namespace mloader {
         ImageAsset();
         explicit ImageAsset(const char* path);
         explicit ImageAsset(const str& path);
-        ImageAsset(Database& database, const mtl::fs::PurePath& path);
+        ImageAsset(Database& database, const Database::PurePath& path);
 
         const Image& image() const;
 
@@ -119,7 +119,7 @@ namespace mloader {
         ShaderAsset();
         explicit ShaderAsset(const char* path);
         explicit ShaderAsset(const str& path);
-        ShaderAsset(Database& database, const mtl::fs::PurePath& path);
+        ShaderAsset(Database& database, const Database::PurePath& path);
 
         const str& source() const;
 
@@ -137,7 +137,7 @@ namespace mloader {
         SoundAsset();
         explicit SoundAsset(const char* path);
         explicit SoundAsset(const str& path);
-        SoundAsset(Database& database, const mtl::fs::PurePath& path);
+        SoundAsset(Database& database, const Database::PurePath& path);
 
         const Sound& sound() const;
 
@@ -155,7 +155,7 @@ namespace mloader {
         FontAsset();
         explicit FontAsset(const char* path);
         explicit FontAsset(const str& path);
-        FontAsset(Database& database, const mtl::fs::PurePath& path);
+        FontAsset(Database& database, const Database::PurePath& path);
 
         const Font& font() const;
 
@@ -168,7 +168,7 @@ namespace mloader {
         TextAsset();
         explicit TextAsset(const char* path);
         explicit TextAsset(const str& path);
-        TextAsset(Database& database, const mtl::fs::PurePath& path);
+        TextAsset(Database& database, const Database::PurePath& path);
 
         const str& text() const;
 
@@ -182,14 +182,14 @@ namespace mloader {
     inline Asset::Asset(AssetType type)
         : m_type(type) {}
 
-    inline Asset::Asset(Database& database, const mtl::fs::PurePath& path, AssetType type)
+    inline Asset::Asset(Database& database, const Database::PurePath& path, AssetType type)
         : Asset(type) {
         bind(database, path);
     }
 
     inline Asset::Asset(const str& path, AssetType type)
         : Asset(type) {
-        bind(ensure_database(), mtl::fs::PurePath(path));
+        bind(ensure_database(), Database::PurePath(path));
     }
 
     inline Asset::Asset(const char* path, AssetType type)
@@ -200,12 +200,12 @@ namespace mloader {
         unload();
     }
 
-    inline void Asset::bind(Database& database, const mtl::fs::PurePath& path) {
+    inline void Asset::bind(Database& database, const Database::PurePath& path) {
         bind(database);
         m_path = path;
     }
 
-    inline void Asset::set_path(const mtl::fs::PurePath& path) {
+    inline void Asset::set_path(const Database::PurePath& path) {
         m_path = path;
         unload();
     }
@@ -290,7 +290,7 @@ namespace mloader {
     inline BinaryAsset::BinaryAsset(const str& path)
         : Asset(path, AssetType::binary) {}
 
-    inline BinaryAsset::BinaryAsset(Database& database, const mtl::fs::PurePath& path)
+    inline BinaryAsset::BinaryAsset(Database& database, const Database::PurePath& path)
         : Asset(database, path, AssetType::binary) {}
 
     inline const BinaryAsset::Data& BinaryAsset::data() const {
@@ -306,7 +306,7 @@ namespace mloader {
     inline ImageAsset::ImageAsset(const str& path)
         : Asset(path, AssetType::image) {}
 
-    inline ImageAsset::ImageAsset(Database& database, const mtl::fs::PurePath& path)
+    inline ImageAsset::ImageAsset(Database& database, const Database::PurePath& path)
         : Asset(database, path, AssetType::image) {}
 
     inline const ImageAsset::Image& ImageAsset::image() const {
@@ -322,7 +322,7 @@ namespace mloader {
     inline ShaderAsset::ShaderAsset(const str& path)
         : Asset(path, AssetType::shader) {}
 
-    inline ShaderAsset::ShaderAsset(Database& database, const mtl::fs::PurePath& path)
+    inline ShaderAsset::ShaderAsset(Database& database, const Database::PurePath& path)
         : Asset(database, path, AssetType::shader) {}
 
     inline const str& ShaderAsset::source() const {
@@ -338,7 +338,7 @@ namespace mloader {
     inline SoundAsset::SoundAsset(const str& path)
         : Asset(path, AssetType::sound) {}
 
-    inline SoundAsset::SoundAsset(Database& database, const mtl::fs::PurePath& path)
+    inline SoundAsset::SoundAsset(Database& database, const Database::PurePath& path)
         : Asset(database, path, AssetType::sound) {}
 
     inline const SoundAsset::Sound& SoundAsset::sound() const {
@@ -354,7 +354,7 @@ namespace mloader {
     inline FontAsset::FontAsset(const str& path)
         : Asset(path, AssetType::font) {}
 
-    inline FontAsset::FontAsset(Database& database, const mtl::fs::PurePath& path)
+    inline FontAsset::FontAsset(Database& database, const Database::PurePath& path)
         : Asset(database, path, AssetType::font) {}
 
     inline const FontAsset::Font& FontAsset::font() const {
@@ -370,7 +370,7 @@ namespace mloader {
     inline TextAsset::TextAsset(const str& path)
         : Asset(path, AssetType::text) {}
 
-    inline TextAsset::TextAsset(Database& database, const mtl::fs::PurePath& path)
+    inline TextAsset::TextAsset(Database& database, const Database::PurePath& path)
         : Asset(database, path, AssetType::text) {}
 
     inline const str& TextAsset::text() const {

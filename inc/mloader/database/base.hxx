@@ -15,7 +15,7 @@ namespace mloader {
      * storage (filesystem directories, packed binaries, etc.).
      */
     struct Database {
-        using PurePath = mtl::fs::PurePath;
+        using PurePath = mtl::fs::PureUnixPath;
 
         ctor Database() = default;
         virt ~Database() = default;

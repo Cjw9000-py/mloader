@@ -28,6 +28,8 @@ add_library(mloader STATIC
         src/database/registry.cxx
         src/scanner.cxx
         src/resource.cxx
+        src/extension/system.hxx
+        src/extension/extension.hxx
 )
 target_include_directories(mloader PUBLIC inc)
 target_link_libraries(mloader PUBLIC MTL)
@@ -35,7 +37,7 @@ target_link_libraries(mloader PUBLIC MTL)
 
 ### Example
 
-add_subdirectory(example)
+add_subdirectory(examples/program)
 
 
 ###  Tests

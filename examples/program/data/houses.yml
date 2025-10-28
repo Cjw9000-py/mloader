@@ -1,0 +1,67 @@
+
+base_house:
+  type: House
+  data:
+    address: 123 Some Address
+    bedrooms: 3
+    has_garage: true
+    occupants:
+      - Guy 1
+      - Guy 2
+
+
+starter_home:
+  type: House
+  parent: base_house
+  data:
+    address: 42 Maple Street
+    occupants:
+      - Alice
+      - Bob
+
+
+city_loft:
+  type: House
+  parent: base_house
+  data:
+    address: 900 Downtown Ave
+    bedrooms: 1
+    has_garage: false
+    occupants:
+      - Carla
+
+
+lakeside_retreat:
+  type: House
+  parent: base_house
+  data:
+    address: 18 Lake View Road
+    bedrooms: 4
+    has_garage: true
+    occupants:
+      - Dan
+      - Erin
+      - Finn
+
+
+mountain_cabin:
+  type: House
+  parent: base_house
+  data:
+    address: 77 Evergreen Trail
+    bedrooms: 2
+    has_garage: false
+    occupants:
+      - Greta
+      - Henry
+
+
+urban_penthouse:
+  type: House
+  parent: base_house
+  data:
+    address: 501 Skyline Tower
+    bedrooms: 2
+    has_garage: false
+    occupants:
+      - Iris

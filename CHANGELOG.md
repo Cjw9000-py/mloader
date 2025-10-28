@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 - Hardened test helpers to create parent directories and open files with explicit modes, fixing intermittent CI failures in the filesystem database suite.
 - Extended git submodule tracking to cover future asset-processing dependencies (`libjpeg-turbo`, `stb`, `libspng`).
 - Tweaked the definition registry ingestion flow to avoid redundant `set_source` calls and clarified loader tests while the loader remains WIP.
+- Reworked `example/data/houses.yml` to use the new keyed house definition format and expanded the catalog with additional variants.
 
 ## v0.1.0 - Database & Resource Foundations
 - Established the static library build with CMake, wiring in the external `MTL` framework.

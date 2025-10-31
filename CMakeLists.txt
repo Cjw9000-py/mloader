@@ -8,7 +8,10 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(MTL_ENABLE_EXTENDED ON)
+set(CLI11_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(CLI11_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 add_subdirectory(extern/MTL)
+add_subdirectory(extern/CLI11)
 
 
 ### mloader Library
@@ -28,11 +31,17 @@ add_library(mloader STATIC
         src/database/registry.cxx
         src/scanner.cxx
         src/resource.cxx
-        src/extension/system.hxx
-        src/extension/extension.hxx
+        src/extension/extension.cxx
+        inc/mloader/extension/archive/constants.hxx
+        inc/mloader/extension/archive/encoder.hxx
+        inc/mloader/extension/archive/decoder.hxx
 )
 target_include_directories(mloader PUBLIC inc)
-target_link_libraries(mloader PUBLIC MTL)
+target_link_libraries(mloader PUBLIC MTL CLI11::CLI11)
+
+
+add_executable(mpacker src/mpacker.cxx)
+target_link_libraries(mpacker PRIVATE mloader)
 
 
 ### Example

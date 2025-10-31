@@ -3,6 +3,11 @@
 All notable changes to this project will be documented in this file.
 
 ## Unreleased
+- Implemented extension configuration loading with a dedicated source file.
+- Restored version string conversion helpers in the MTL submodule while retaining upstream updates.
+- Added CLI11 as a submodule dependency and wired it into the build for upcoming tooling.
+- Added an extension archive decoder and centralized header constants alongside the encoder.
+- Completed the extension archive header encoder to serialize dependency and entrypoint metadata.
 - Added an asset prototype layer with typed wrappers (binary, image, shader, sound, font, text) that lazily resolve database resources, cache parsed payloads on the backing resource, and expose convenient accessors.
 - Introduced a changelog and refreshed documentation guidance (`AGENTS.md`, `CODING_STYLE.md`) to keep contributions recorded.
 - Hardened test helpers to create parent directories and open files with explicit modes, fixing intermittent CI failures in the filesystem database suite.
